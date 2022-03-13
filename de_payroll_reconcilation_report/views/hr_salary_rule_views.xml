@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<odoo>
+   <data>
+
+         <record id="hr_salary_rule_views_reconcilation_report_seq" model="ir.ui.view">
+			<field name="name">hr.salary.rule.form.reconcilation.report.seq</field>
+			<field name="model">hr.salary.rule</field>
+			<field name="inherit_id" ref="hr_payroll.hr_salary_rule_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//notebook//page[@name='reconcile_compansation']" position="after">
+                       <field name="deduction_summary_seq" />
+                       <field name="compansation_summary_seq" />    
+	       </xpath>
+               <xpath expr="//notebook//page[@name='reconciliation_details']" position="after">
+                       <field name="detail_reconcile_seq" />
+	       </xpath>
+            </field>
+		</record>
+         
+    </data>
+</odoo>

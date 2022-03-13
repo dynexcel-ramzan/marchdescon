@@ -1,0 +1,12 @@
+<odoo>
+  <data>
+       <report 
+            id="open_ora_account_wizard_action"
+            string="GL Summary Report"
+            model="report.de_payroll_reconcilation_report.gl_report"
+            report_type="xlsx"
+            file="de_payroll_reconcilation_report.gl_report"
+            name="de_payroll_reconcilation_report.gl_report"
+        />
+  </data>
+</odoo>

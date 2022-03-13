@@ -1,0 +1,107 @@
+<odoo>
+  <data>
+  <template id="transfer_report">
+    <t t-call="web.html_container">
+    <t t-call="web.external_layout">
+        <t t-set="company" t-value="docs.company_id"/>
+        <t t-set="docs" t-value="docs.with_context(lang=lang)"/>
+        <div class="page" style="font-size:12px">
+            <div class="oe_structure"/>
+            <div class='pull-left' style='color:blue;'>
+                <h5>Payment Detail of Bank Transfer</h5>
+            </div>
+            <div  class='pull-right' style="max-width: 250px;height: 20px; color:blue;">
+               <strong>Printed On:</strong>
+               <span  t-esc="datetime.datetime.strptime(str(datetime.datetime.now()+ relativedelta(hours =+ 5)), '%Y-%m-%d %H:%M:%S.%f').strftime('%d-%b-%y %H:%M %p')"/> <br/>
+               <strong>Printed By:</strong>
+               <span  t-esc="user.name"/> 
+        </div>  
+            
+            <br/>
+            <br/>
+            
+            <t t-set='ora_date_from'  t-value='0'/>
+            <t t-set='ora_date_to'  t-value='0'/>
+            <t t-set='transfer_loop_count'  t-value='0'/>
+            <t t-foreach="docs" t-as="o_">
+                <t t-set='transfer_loop_count'  t-value='transfer_loop_count + 1'/>
+                
+                <t t-if="transfer_loop_count==1">
+                  <t t-set='ora_date_from'  t-value='o_.date'/>
+                  <t t-set='ora_date_to'  t-value='o_.date'/>
+                </t>
+                <t t-if="transfer_loop_count==1">
+                    <t t-if='o_.date &lt; ora_date_from'>
+                       <t t-set='ora_date_from'  t-value='o_.date'/>
+                    </t>
+                    <t t-if='o_.date &gt; ora_date_to'>
+                       <t t-set='ora_date_to'  t-value='o_.date'/>
+                    </t>
+                </t> 
+            </t>    
+            
+             <table class="table table-sm table-bordered">
+                <tr>
+                    <th>Date From</th>
+                    <td><t t-esc="ora_date_from.strftime('%d-%b-%y')"/></td>
+                    <th>Date To</th>
+                    <td><t t-esc="ora_date_to.strftime('%d-%b-%y')"/></td>
+                </tr>
+                <tr>
+                    <th>Pay Document:</th>
+                    <td>Bank Transfer</td>  
+                </tr> 
+             </table>
+            
+            <table class="table table-sm table-bordered">
+                <tr>
+                    <th>Date</th>
+                    <th>Party Name</th>
+                    <th>Payment Document</th>
+                    <th>Bank Account</th>
+                    <th>Amount</th>
+                </tr>
+                <t t-set='total_payment_amount'  t-value='0'/> 
+                 <t t-foreach="docs" t-as="o">
+                        
+                   <tr>
+                       <td><t t-esc='o.date'/></td> 
+                       <td><t t-esc='o.partner_id.name'/></td> 
+                       <td>Bank Transfer-<t t-foreach="request.env['hr.employee'].search([('address_home_id','=', o.partner_id.id)], limit=1)" t-as="emp">
+                          <t t-esc='emp.work_location_id.name'/>
+                     </t> 
+                       
+                       </td> 
+                       
+                       <td>
+                            <t t-foreach="request.env['hr.employee'].search([('address_home_id','=', o.partner_id.id)], limit=1)" t-as="emp">
+                               <t t-esc='emp.bank_account_id.acc_number'/>
+                            </t> 
+                       
+                       </td> 
+                       <td>
+                           <t t-esc="'{0:,}'.format(int(round(o.amount)))"/>
+                           <t t-set='total_payment_amount'  t-value='total_payment_amount + o.amount'/>     
+                       </td> 
+                   </tr>
+                 </t>
+                 <tr>
+                     <td></td>
+                     <td></td>
+                     <td></td>
+                     <th>Total</th>
+                     <td><t t-esc="'{0:,}'.format(int(round(total_payment_amount)))"/></td>
+                 </tr>
+                
+             </table>
+            
+          </div>
+      </t>
+    </t>
+</template>
+      
+  
+    
+    
+  </data>
+</odoo>

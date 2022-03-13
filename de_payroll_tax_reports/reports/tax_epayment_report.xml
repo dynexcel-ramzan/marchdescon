@@ -1,0 +1,12 @@
+<odoo>
+  <data>
+       <report 
+            id="open_tax_epayment_action"
+            string="Tax Epayment Report"
+            model="report.de_payroll_tax_reports.epayment_report"
+            report_type="xlsx"
+            file="de_payroll_tax_reports.epayment_report"
+            name="de_payroll_tax_reports.epayment_report"
+        />
+  </data>
+</odoo>

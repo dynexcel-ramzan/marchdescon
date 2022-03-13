@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <template id="portal_overtime_layout" name="Portal layout: overtime menu entry" inherit_id="portal.portal_breadcrumbs" priority="25">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'overtime' or overtime" class="col-lg-2" t-attf-class="breadcrumb-item #{'active ' if not overtime else ''}">
+                <a t-if="overtime" t-attf-href="/overtime/approvals?{{ keep_query() }}">Overtime</a>
+                <t t-else="">Overtime</t>
+            </li>
+            <li t-if="overtime" class="breadcrumb-item active text-truncate col-8 col-lg-10">
+                <t t-esc="overtime.id"/>
+            </li>
+        </xpath>
+    </template>
+
+    <template id="portal_overtime_home" name="Overtime Approvals" customize_show="True" inherit_id="portal.portal_my_home" priority="25">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry"  groups="de_portal_overtime.group_overtime_portal">
+                <t t-set="title">Overtime</t>
+                <t t-set="url" t-value="'/overtime/approvals'"/>
+                <t t-set="placeholder_count" t-value="'overtime_count'"/>
+            </t>
+        </xpath>  
+    </template>
+
+    <template id="portal_hr_overtime_req" name="Overtime Request">
+         <t t-set="foo" t-value="2 + 1"/>
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Overtime</t>
+            </t>
+            <t t-if="not grouped_overtime">
+                <div class="alert alert-warning mt8" role="alert">
+                    There are no Overtime.
+                </div>
+            </t>
+            <t t-if="grouped_overtime">
+                <t t-call="portal.portal_table">
+                    <t t-foreach="grouped_overtime" t-as="overtimes">
+                        <thead>
+                            <tr t-attf-class="{{'thead-light' if not groupby == 'none' else ''}}">
+                                <th class="text-left">EMP#</th>
+                                <th class="text-left">Incharge</th>
+                                <th class="text-left">Date From</th>
+                                <th class="text-left">Date To</th>
+                                <th class="text-left">Status</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="overtimes" t-as="overtime"> 
+                                <tr>
+                                    <td>
+                                        <a t-attf-href="/overtime/approval/#{overtime.id}?{{ keep_query() }}"><span t-field="overtime.incharge_id.emp_number"/></a>
+                                    </td>
+                                     <td>
+                                        <a t-attf-href="/overtime/approval/#{overtime.id}?{{ keep_query() }}"><span t-field="overtime.incharge_id.name"/></a>
+                                    </td>
+                                     <td class="text-left">
+                                        <span t-esc="overtime.date_from"  t-options='{"widget": "date"}'/>
+                                    </td>
+                                    <td class="text-left">
+                                        <span t-esc="overtime.date_to"  t-options='{"widget": "date"}'/>
+                                    </td>
+                                     <td class="text-center">
+                                            <t t-if="overtime.state == 'submitted'">
+                                                <i class="badge badge-pill badge-info" >To Approve</i>
+                                            </t>
+                                            <t t-if="overtime.state == 'approved'">
+                                                <i class="badge badge-pill badge-info" >Approved</i>
+                                            </t>
+                                    </td>	
+                                </tr>
+                            </t>
+                        </tbody>
+                    </t>
+                </t>
+            </t>   
+        </t>
+    </template>
+    
+    <template id="portal_overtime_lines" name="Overtime Approval line">
+         <t t-set="foo" t-value="2 + 1"/>
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Overtime</t>
+            </t>
+            <t t-if="not overtime">
+                <div class="alert alert-warning mt8" role="alert">
+                    There are no Overtime.
+                </div>
+            </t>
+            <t t-if="overtime">
+                <table class="table table-sm table-striped table-bordered"   id="datepanel">        
+                    <tr>
+                        <th class="text-left">Date From</th>
+                        <td class="text-left"><span t-esc='date_from'  t-options='{"widget": "date"}' /></td>
+                        <th class="text-left">Date To</th>
+                        <td class="text-left"><span t-esc='date_to' t-options='{"widget": "date"}' /></td>
+                        <th class="text-left">Overtime Limit</th>
+                        <td class="text-left">48</td>
+                    </tr>
+                </table>                
+                <table class="table table-sm table-striped table-bordered"   id="overtimeTable">
+                            <tr t-attf-class="{{'thead-light' if not groupby == 'none' else ''}}">
+                                <th class="text-left">Employee</th>
+                                <th class="text-left">Normal OT(Hours)</th>
+                                <th class="text-left">Rest OT(Hours)</th>
+                                <th class="text-left">Gazetted OT(Hours)</th>
+                                <th class="text-left">Remarks</th>
+                            </tr>
+                            <t t-foreach="overtime.overtime_line_ids" t-as="ovt_line">   
+                                <tr>  
+                                     <td class="employee"> 
+                                       <input type="hidden" class="form-control s_website_form_input" name="employee_id" id="employee_id"   t-att-value="ovt_line.id"/>
+                                         <span t-esc="ovt_line.employee_id.name" />-(<span t-esc="ovt_line.employee_id.emp_number" />)
+                                    </td>
+                                     <td class="normalot">
+                                        <input type="float" class="form-control s_website_form_input" name="normal_ot" id="normalot"   t-att-value="ovt_line.normal_ot"/>
+                                    </td>
+                                    <td class="restot">
+                                        <input type="float" class="form-control s_website_form_input" name="rest_day_ot" id="restot"  t-att-value="ovt_line.rest_day_ot"/>
+                                    </td>
+                                    <td class="gazettedot">
+                                        <input type="float" class="form-control s_website_form_input" name="gazetted_ot" id="gazettedot"  t-att-value="ovt_line.gazetted_ot" />
+                                    </td> 
+                                    <td class="remarks">
+                                        <input type="text" class="form-control s_website_form_input" name="remakrs" id="remarks"   />
+                                    </td> 
+                                    <td class="id">
+                                        <input type="hidden" class="form-control s_website_form_input" name="id" id="id"  t-att-value="ovt_line.id" />
+                                    </td> 
+                                </tr>
+                            </t>  
+                  </table>
+                
+                  <form id="portal_overtime_approval_form_line" data-toggle="validator" action="/overtime/approval/line/save">
+                    <input type="hidden" id="line_overtime_vals" class="form-control s_website_form_input" name="line_overtime_vals"  multiple="true" />  
+                       <input type="hidden" id="date_from" class="form-control s_website_form_input" name="date_from" t-att-value="date_from"  multiple="true" /> 
+                        <input type="hidden" id="date_to" class="form-control s_website_form_input" name="date_to" t-att-value="date_to"  multiple="true" /> 
+                         
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                      <script src="/de_portal_overtime/static/src/js/jquery_min.js"></script> 
+                      <script type="text/javascript">
+                        $(document).ready(function(){
+                        $("#overtimeapp").on('click',function(){
+                           var overtimedata=[];
+                           // loop over each table row (tr)
+                           $("#overtimeTable tr").each(function(){
+                                var currentRow=$(this);
+                                var col1_value=currentRow.find(".employee input").val();
+                                var col2_value=currentRow.find(".normalot input").val();
+                                var col3_value=currentRow.find(".restot input").val();
+                                var col4_value=currentRow.find(".gazettedot input").val();
+                                var col5_value=currentRow.find(".remarks input").val();
+                                var col6_value=currentRow.find(".id input").val();
+                                var obj={};
+                                obj.col1=col1_value;
+                                obj.col2=col2_value;
+                                obj.col3=col3_value;
+                                obj.col4=col4_value;
+                                obj.col5=col5_value;
+                                obj.col6=col6_value;
+                                overtimedata.push(obj);
+                           });
+                         otdictionary = JSON.stringify(overtimedata); 
+                         var lista = document.getElementById("line_overtime_vals")
+                         lista.value = otdictionary 
+                         console.log(overtimedata);   
+                         });
+                       });
+                          
+                      </script>  
+                     <div class="form-group col-12 s_website_form_submit" data-name="Submit Button">
+                            <div style="width: 200px;" class="s_website_form_label"></div>
+                            <button type="submit" id="overtimeapp" class="btn btn-primary pull-left">Approve</button>
+                            <span id="s_website_form_result"></span>
+                        </div>
+                </form>  
+            </t>   
+            <br/>
+            <br/>   
+        </t>
+    </template>
+    
+     <template id="de_portal_overtime.overtime_approve_submited" name="Site Attendance Received">
+        <t t-call="portal.portal_layout">
+            <div id="wrap" class="oe_structure oe_empty">
+                <div class="container">
+                    <div class="row">
+                        <t t-if="request.session.get('form_builder_model_model', '') == 'hr.attendance.site'">
+                            <t t-set="siteattendance" t-value="request.portal._website_form_last_record().sudo()"/>
+                        </t>
+                        <h1 class="text-center"><i class="fa fa-check-circle fa-2x text-success" role="img" aria-label="Success" title="Success"/></h1>
+                        <t t-if="siteattendance">
+                            <h1 class="text-center">Overtime Approval Done <a t-if="request.session.uid" t-attf-href="#">#<span t-field="siteattendance.id"/></a><t t-if="not request.session.get('uid')">#<span t-field="siteattendance.id"/></t>.</h1>
+                        </t>
+                        <h1 class="text-center">Thank you for Approving your Site Overtime request!</h1>
+                    </div>
+                </div>
+            </div>
+         </t>
+    </template>
+
+    
+</odoo>
+
+
+

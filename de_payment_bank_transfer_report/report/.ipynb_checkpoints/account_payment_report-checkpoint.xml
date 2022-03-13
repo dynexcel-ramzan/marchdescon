@@ -1,0 +1,12 @@
+<odoo>
+  <data>
+       <report 
+            id="open_payment_bank_transfer_action"
+            string="Bank Transfer Detail"
+            model="account.payment"
+            report_type="qweb-pdf"
+            file="de_payment_bank_transfer_report.transfer_report"
+            name="de_payment_bank_transfer_report.transfer_report"
+        />
+  </data>
+</odoo>

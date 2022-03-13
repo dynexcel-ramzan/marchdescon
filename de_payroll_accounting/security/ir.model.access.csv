@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_controlled_account,access.controlled.account,model_controlled_account,,1,1,1,1
+access_ora_ledger_report,access.ora.ledger.report,model_ora_ledger_report,,1,1,1,1

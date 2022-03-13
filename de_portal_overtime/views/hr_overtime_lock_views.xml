@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="view_hr_overtime_lock_form" model="ir.ui.view">
+            <field name="name">hr.overtime.lock.form</field>
+            <field name="model">hr.overtime.lock</field> 
+            <field name="arch" type="xml">
+                <form string="Overtime lock">
+                   
+                    <sheet>
+                          
+                            <group>
+                                <group>
+                                   <field name="date" 
+/>
+                                </group>
+                                <group>
+                                 
+                              </group>
+                            </group>
+                        
+                       
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+           <record model="ir.ui.view" id="view_overtime_lock_request_tree">
+            <field name="name">hr.overtime.lock.tree</field>
+            <field name="model">hr.overtime.lock</field>
+            <field name="arch" type="xml">
+                <tree string="Overtime lcok"  >
+                    <field name="date"/>
+                   
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_overtime_lock_lines" model="ir.actions.act_window">
+            <field name="name">Overtime Approval Date</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.overtime.lock</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create Records Here.......
+                </p>
+            </field>
+        </record>
+         <menuitem id="overtime_lock_menuitem"
+                  name="Overtime Approval Date"
+                  parent="de_employee_overtime.hr_overtime_configuration"
+                  action="action_overtime_lock_lines"
+                  sequence="9"/>
+        
+    </data>
+</odoo>

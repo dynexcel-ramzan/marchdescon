@@ -1,0 +1,103 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+        <record id="view_hr_overtime_approval_form" model="ir.ui.view">
+            <field name="name">hr.overtime.approval.form</field>
+            <field name="model">hr.overtime.approval</field> 
+            <field name="arch" type="xml">
+                <form string="Overtime Approval">
+                    <header>
+                        <button name='action_submit' string="Submit" type="object" states='draft'
+                                class='oe_highlight'/>
+                        <button name='action_approve' string="Approve" type="object" 
+                                class='oe_highlight'  attrs = "{'invisible': [('state', '!=', 'submitted')]}"  invisible='1'/>
+                        <button name='action_refuse' string="Refuse" type="object"
+                                class='oe_highlight' attrs = "{'invisible': [('state', '!=', 'submitted')]}"  invisible='1'/>
+                        
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,submitted,approved,refused"/>
+                    </header>
+                    <sheet>
+                          <div class="oe_button_box" name="button_box">
+                             <button name="%(action_approval_request_view_overtime_approval)d" type="action" class="oe_stat_button" icon="fa-check-square-o" string="Approvals" context="{'site_ot_id':id,'category_id':category_id}" attrs="{'invisible': [('approval_request_id', '=', False)]}">
+                            </button>
+                         </div>
+                            <group>
+                                <group>
+                                   <field name="incharge_id"    attrs="{'readonly': [('state','!=','draft')]}"
+/>
+
+                                   <field name="work_location_id"
+                                        attrs="{'readonly': [('state','!=','draft')]}" />
+                                   <field name="date_from"
+                                        attrs="{'readonly': [('state','!=','draft')]}" />
+                                  
+                                </group>
+                                <group>
+                                 <field name="category_id"
+                                        invisible="1" />
+                                <field name="date_to"
+                                        attrs="{'readonly': [('state','!=','draft')]}"/>
+                                  <field name="approval_request_id"
+                                        invisible="1" />    
+                              </group>
+                            </group>
+                        <notebook>
+                            <page string="Overtime Lines">
+                                <field  name="overtime_line_ids" attrs="{'readonly': [('state','!=','draft')]}">
+                                   <tree editable="bottom">
+                                     <field name="employee_id"  />
+                                     <field name="site_ot_id"  invisible='1'/>  
+                                     <field name="work_location_id"  />     
+                                     <field name="normal_ot"  />
+                                     <field name="rest_day_ot" />
+                                     <field name="gazetted_ot" />
+                                     <field name="remarks" />  
+                                   </tree> 
+                                </field>
+                            </page>
+                        </notebook>
+                       
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+           <record model="ir.ui.view" id="view_overtime_approval_request_tree">
+            <field name="name">hr.overtime.approval.tree</field>
+            <field name="model">hr.overtime.approval</field>
+            <field name="arch" type="xml">
+
+                <tree string="Overtime Line"  >
+                    <field name="work_location_id"/>
+                    <field name="incharge_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="state"/>
+                </tree>
+
+            </field>
+        </record>
+
+        <record id="action_overtime_request_lines" model="ir.actions.act_window">
+            <field name="name">Overtime Approval</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">hr.overtime.approval</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create Records Here.......
+                </p>
+            </field>
+        </record>
+         <menuitem id="overtime_approval_menuitem"
+                  name="Overtime Approval"
+                  parent="de_employee_overtime.attendance_overtime_main_menu"
+                  action="action_overtime_request_lines"
+                  groups="de_portal_overtime.group_overtime_portal" 
+                  sequence="9"/>
+        
+    </data>
+</odoo>

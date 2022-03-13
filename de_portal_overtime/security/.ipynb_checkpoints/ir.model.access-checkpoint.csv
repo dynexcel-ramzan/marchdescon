@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_overtime_approval,access.hr.overtime.approval,model_hr_overtime_approval,,1,1,1,1
+access_hr_overtime_approval_line,access.hr.overtime.approval.line,model_hr_overtime_approval_line,,1,1,1,1
+access_hr_overtime_lock,access.hr.overtime.lock,model_hr_overtime_lock,,1,1,1,1

@@ -1,0 +1,166 @@
+<odoo>
+  <data>
+  <template id="voucher_report">
+    <t t-call="web.html_container">
+    <t t-call="web.external_layout">         
+      <t t-foreach="docs" t-as="o">
+        <div class="page" style="font-size:12px">
+            <div class="oe_structure"/>
+            <div class='pull-left' style='color:blue;'>
+                <h5>Payment Voucher</h5>
+            </div>
+            
+            <div  class='pull-right' style="max-width: 250px;height: 20px; color:blue;">
+               <strong>Printed On:</strong>
+               <span  t-esc="datetime.datetime.strptime(str(datetime.datetime.now()+ relativedelta(hours =+ 5)), '%Y-%m-%d %H:%M:%S.%f').strftime('%d-%b-%y %H:%M %p')"/> <br/>
+            </div>
+            <br/>
+            <br/>
+            
+             <table class="table table-sm table-bordered">
+                <tr>
+                    <th>Bank Gl_Code:</th>
+                    <td><t t-esc="o.journal_id.code"/></td> 
+                </tr>
+                <tr>
+                    <th>Bank Name:</th>
+                    <td><t t-esc="o.company_id.name"/></td>
+                    <th>Payment Date:</th>
+                    <td><t t-esc="o.date.strftime('%d-%b-%y')"/></td>
+                    <th>Name:</th>
+                    <td><t t-esc="o.partner_id.name"/></td>
+                </tr>  
+                <tr>
+                    <th>Account No:</th>
+                    <td><t t-esc="o.journal_id.default_account_id.name"/></td>
+                    <th>Voucher No.:</th>
+                    <td><t t-esc="o.name"/></td>   
+                </tr> 
+                 
+                <tr>
+                    <th>Document Date:</th>
+                    <td><t t-esc="o.date"/></td>
+                    <th>Voucher Type:</th>
+                    <td>Bank Payment Voucher-<t t-foreach="request.env['hr.employee'].search([('address_home_id','=', o.partner_id.id)], limit=1)" t-as="emp">
+                          <t t-esc='emp.work_location_id.name'/>
+                        </t> 
+                    </td> 
+                    
+                    <th>Employee#:</th>
+                    <td>
+                         <t t-foreach="request.env['hr.employee'].search([('address_home_id','=', o.partner_id.id)], limit=1)" t-as="emp">
+                            <t t-esc='emp.emp_number'/>
+                         </t> 
+                    </td>  
+                </tr>
+                <tr>
+                    <th>Document No.:</th>
+                    <td><t t-esc="o.id"/></td>
+                    <th>Payment Currency:</th>
+                    <td><t t-esc="o.currency_id.name"/></td>  
+                    <th>Bank A/C #:</th>
+                    <td>
+                        <t t-foreach="request.env['hr.employee'].search([('address_home_id','=', o.partner_id.id)], limit=1)" t-as="emp">
+                            <t t-esc='emp.bank_account_id.acc_number'/>
+                         </t> 
+                    </td>  
+                </tr> 
+                
+             </table>
+            
+            <table class="table table-sm table-bordered">
+                <tr>
+                    <th>Line No.</th>
+                    <th>Invoice Date.</th>
+                    <th>Due Date</th>
+                    <th>GL CODE</th>
+                    <th>Bill No.</th>
+                    <th>Invoice Description</th>
+                    <th>Invoice Amount</th>
+                    <th>Outstanding Amount</th>
+                    <th>Amount Paid</th>
+                    <th>Remaining On Invoice</th>
+                </tr>
+                
+                <tr>
+                    <th>1</th>
+                    <th><t t-esc='o.move_id.date'/> </th>
+                    <th><t t-esc='o.move_id.invoice_date_due'/> </th>
+                    <th><t t-esc='o.destination_account_id.code'/></th>
+                    <th><t t-esc='o.move_id.name'/></th>
+                    <th><t t-esc='o.move_id.ref'/></th>
+                    <th>
+                        <t t-esc="'{0:,}'.format(int(round(o.amount)))"/>
+                    </th>
+                    <th>
+                        <t t-esc="'{0:,}'.format(int(round(o.amount)))"/>
+                    </th>
+                    <th>
+                        <t t-if="o.is_reconciled==False">
+                           0
+                        </t>    
+                        <t t-if="o.is_reconciled==True">
+                           <t t-esc="'{0:,}'.format(int(round(o.amount)))"/> 
+                        </t> 
+                    </th>
+                    <th>
+                        <t t-if="o.is_reconciled==False">
+                           <t t-esc="'{0:,}'.format(int(round(o.amount)))"/>
+                        </t>    
+                        <t t-if="o.is_reconciled==True">
+                           0 
+                        </t> 
+                    </th>
+                </tr>
+                
+                 <tr>
+                     <td></td>
+                     <td></td>
+                     <td></td>
+                     <td>Total For the Payment:</td>
+                     <td></td>
+                     <td></td>
+                     <td></td>
+                     <td>
+                        <t t-esc="'{0:,}'.format(int(round(o.amount)))"/> 
+                     </td>
+                     <th>
+                       <t t-if="o.is_reconciled==False">
+                           <t t-esc="'{0:,}'.format(int(round(o.amount)))" />
+                        </t>    
+                        <t t-if="o.is_reconciled==True">
+                           0 
+                        </t> 
+                     </th>
+                     <td></td>
+                 </tr>
+                
+             </table>
+            
+            <br/>
+            <br/>
+            <br/>
+            <table class="table table-sm table-striped table-bordered">
+                <tr>
+                    <th style="max-width:100px; word-wrap:break-word;padding-left:5px;"></th>
+                    
+                    <th style="border-top: 1px solid black;padding:5px;text-align:center;">GENERATED BY</th>
+                    <th style="max-width:100px; word-wrap:break-word;padding:5px;"> </th>
+                    
+                    <th style="border-top: 1px solid black;padding:5px;text-align:center;">APPROVED BY</th>
+                    <th style="max-width:100px; word-wrap:break-word;padding-left:5px;"> </th>
+                    <th style="border-top: 1px solid black;padding:5px;text-align:center;">RECEIVED BY</th>
+                </tr>
+            </table>
+            
+          </div>
+        </t> 
+      </t>
+    </t>
+</template>
+      
+  
+    
+    
+  </data>
+</odoo>

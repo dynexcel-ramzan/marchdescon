@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+     <record id="hr_work_location_form_view_ot_approver" model="ir.ui.view">
+			<field name="name">hr.work.location.form.view.ot</field>
+			<field name="model">hr.work.location</field>
+			<field name="inherit_id" ref="de_employee_overtime.hr_work_location_form_view"/>
+			<field name="arch" type="xml">
+                <xpath expr="//field[@name='company_id']" position="before">					
+                      <field name="ot_approver_id" />
+				</xpath>      
+            </field>
+		</record>
+      
+
+  </data>
+</odoo>
