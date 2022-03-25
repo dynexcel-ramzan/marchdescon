@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_medicine_prescrip,access.medicine.prescrip,model_medicine_prescrip,base.group_user,1,1,1,1
+access_medicine_covid,access.medicine_covid,model_medicine_covid,base.group_user,1,1,1,1

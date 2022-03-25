@@ -1,0 +1,136 @@
+<odoo>
+  <data>
+      
+        <!-- Form View -->
+        <record id="medicine_prescrip_form_view" model="ir.ui.view">
+            <field name="name">medicine.prescrip.form.view</field>
+            <field name="model">medicine.prescrip</field>
+            <field name="arch" type="xml">
+                <form string="Medicine Prescription">                  
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" 
+                                       placeholder="Name ...."/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="employee_id"/>
+                            </group>
+                            
+                            <group>
+                                <field name="employee_ids"   />
+                                
+                            </group>
+                           
+                        </group>                                             
+                    </sheet>                 
+                </form>
+            </field>
+        </record>
+      
+      <!-- Form View -->
+        <record id="medicine_covid_form_view" model="ir.ui.view">
+            <field name="name">medicine.covid.form.view</field>
+            <field name="model">medicine.covid</field>
+            <field name="arch" type="xml">
+                <form >                  
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" 
+                                       placeholder="Description ...."/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                               
+                                <field name="employee_id"/>
+                            </group>
+                            
+                            <group>
+                                <field name="employee_ids"   />
+                                
+                            </group>
+                           
+                        </group>                                             
+                    </sheet>                 
+                </form>
+            </field>
+        </record>
+      
+      
+      <!-- Tree View -->
+        <record id="medicine_prescrip_tree_view" model="ir.ui.view">
+            <field name="name">medicine.prescrip.tree.view</field>
+            <field name="model">medicine.prescrip</field>
+            <field name="arch" type="xml">
+                <tree string="Medicine Prescription">                 
+                    <field name="name"/>
+                    <field name="employee_id"   />
+                    <field name="employee_ids"   />
+                </tree>
+            </field>
+        </record>
+      
+       <!-- Tree View -->
+        <record id="medicine_covid_tree_view" model="ir.ui.view">
+            <field name="name">medicine.covid.tree.view</field>
+            <field name="model">medicine.covid</field>
+            <field name="arch" type="xml">
+                <tree string="Medicine Covid">                 
+                     <field name="name"/>
+                    <field name="employee_id"   />
+                    <field name="employee_ids"   />
+                </tree>
+            </field>
+        </record>
+
+      
+      <record id="action_medicine_prescrip" model="ir.actions.act_window">
+            <field name="name">Medicine Prescription</field>
+            <field name="res_model">medicine.prescrip</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Define Medicine Prescription
+                </p>
+            </field>
+        </record>
+      
+       <record id="action_medicine_covid" model="ir.actions.act_window">
+            <field name="name">Medicine COVID</field>
+            <field name="res_model">medicine.covid</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Define Medicine COVID
+                </p>
+            </field>
+        </record>
+        
+      
+      
+        <menuitem name="Custom" id="custom_parent_menu"
+                  />
+      
+        <menuitem name="Medicine" id="custom_sub_medicine_menu"
+                 parent="custom_parent_menu" />
+      
+        <menuitem name="Medicine Prescription" id="custom_sub_medicine_presription_menu"
+                 parent="custom_sub_medicine_menu"  
+                 action="action_medicine_prescrip" 
+                  />
+      
+        <menuitem name="Medicine COVID" id="custom_sub_medicine_covid_menu"
+                 parent="custom_sub_medicine_menu"  
+                  action="action_medicine_covid"
+                  />
+      
+      
+   
+  </data>
+</odoo>
