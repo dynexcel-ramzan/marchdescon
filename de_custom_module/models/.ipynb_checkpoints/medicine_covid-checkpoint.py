@@ -11,4 +11,4 @@ class MedicineCovid(models.Model):
     name = fields.Char(string='Description') 
     employee_id = fields.Many2one('hr.employee', strin='Employee')
     employee_ids = fields.Many2many('hr.employee', strin='Employees')
-
+    
