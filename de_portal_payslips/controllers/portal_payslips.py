@@ -65,7 +65,7 @@ class CustomerPortal(CustomerPortal):
             report_sudo = report_sudo.with_company(model.company_id)
 
         method_name = '_render_qweb_%s' % (report_type)
-        report = getattr(report_sudo, method_name)([model], data={'report_type': report_type,'o':slip_record})[0]
+        report = getattr(report_sudo, method_name)([model], data={'report_type': report_type,'id':slip_record})[0]
         reporthttpheaders = [
             ('Content-Type', 'application/pdf' if report_type == 'pdf' else 'text/html'),
             ('Content-Length', len(report)),
@@ -79,7 +79,7 @@ class CustomerPortal(CustomerPortal):
     @http.route(['/payslip/print/report/<int:slip_id>'], type='http', auth="public", website=True)
     def action_print_payslip_report(self, slip_id , access_token=None, **kw):
         report_type='pdf'
-        order_sudo = request.env['hr.payslip'].sudo().search([('id','=',slip_id)], limit=1)
+        order_sudo = request.env['hr.payslip'].sudo().search([('id','=',slip_id)], limit=1).id
         download = False
         return self._show_report_payslip(model=order_sudo, slip_record=order_sudo, report_type=report_type, report_ref='de_payroll_reports.hr_payslip_reconcile_report', download=download)
     

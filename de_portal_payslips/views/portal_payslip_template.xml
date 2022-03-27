@@ -41,11 +41,11 @@
                         <thead>
                             <tr style='background-color:#875A7B; color:white;'>
                                
-                                <th class="text-left">Employee</th>
                                 <th class="text-left">Reference</th>
-                                <th class="text-left">From</th>
-                                <th class="text-left">To</th>
+                                <th class="text-left">Period</th>
                                 <th class="text-left">Base Salary</th>
+                                <th class="text-left">Tax Amount</th>
+                                <th class="text-left">Provident Fund</th>
                                 <th class="text-center">Net Salary</th>
                                 <th class="text-center">Status</th>
                                 <th class="text-center"></th>
@@ -56,22 +56,33 @@
                                 <t t-if="payslip.employee_id.user_id.id == uid">         
                                 <tr>
                                     <td>
-                                        <span t-field="payslip.employee_id.name"/>
-                                    </td>
-                                     <td class="text-left">
                                         <span t-esc="payslip.number" />
                                     </td>
-                                    <td class="text-left">
-                                        <span t-esc="payslip.date_from"   t-options='{"widget": "date"}'/>
+                                     <td class="text-left">
+                                        <span t-esc="payslip.fiscal_month.name" />-<span t-esc="payslip.date_to.year" />
                                     </td>
                                     <td class="text-left">
-                                        <span t-esc="payslip.date_to"  t-options='{"widget": "date"}'/>
+                                        <span t-esc="'{0:,}'.format(int(round(payslip.basic_wage)))" />
+                                    </td>
+                                    
+                                    <td class="text-left">
+                                      <t t-foreach="payslip.line_ids" t-as="rule">
+                                         <t t-if='rule.code=="INC01"'> 
+                                            <span t-esc="'{0:,}'.format(int(round(rule.amount)))" />
+                                         </t>    
+                                      </t>    
                                     </td>
                                     <td class="text-left">
-                                        <span t-esc="payslip.basic_wage" />
+                                        <t t-set='pfund_total'  t-value='0' />
+                                        <t t-foreach="payslip.line_ids" t-as="rule">
+                                         <t t-if='rule.code in ("PF01", "PF01AR")'> 
+                                            <t t-set='pfund_total'  t-value='pfund_total + rule.amount' />
+                                         </t>    
+                                        </t> 
+                                        <span t-esc="'{0:,}'.format(int(round(pfund_total)))" />
                                     </td>
                                     <td class="text-left">
-                                        <span t-esc="payslip.net_wage" />
+                                        <span t-esc="'{0:,}'.format(int(round(payslip.net_wage)))" />
                                     </td>
                                     <td class="text-center">
                                         <t t-if="payslip.state == 'draft'">
@@ -86,7 +97,8 @@
                                         <t t-if="payslip.state == 'cancel'">
                                             <i class="badge badge-pill badge-info" >Rejected</i>
                                         </t>
-                                    </td>	
+                                    </td>
+	
                                     <td><a t-attf-href="/payslip/print/report/#{payslip.id}?{{ keep_query() }}" title="Download"><i class="fa fa-download"></i></a></td>
 
                                 </tr>

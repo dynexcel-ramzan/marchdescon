@@ -197,7 +197,15 @@
          </t>
         
       </t>
-</template>
+     </template>
+
+      <template id="slip_portal_report">
+        <t t-call="web.html_container">
+         <t t-foreach="docs" t-as="o">
+            <t t-call="de_payroll_reports.slip_reconcilation_report" />
+         </t>        
+       </t>          
+      </template>
     
     
   </data>

@@ -7,6 +7,14 @@
             name="de_payroll_reports.slip_reconcile_report"
             file="de_payroll_reports.slip_reconcile_report"
        />
+       
+       <report id="hr_payslip_portal_report"
+            model="report.de_payroll_reports.slip_portal_report"
+            string="Slip Report"
+            report_type="qweb-pdf"
+            name="de_payroll_reports.slip_portal_report"
+            file="de_payroll_reports.slip_portal_report"
+       />
       
   </data>
 </odoo>
