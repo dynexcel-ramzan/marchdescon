@@ -20,4 +20,6 @@ class ExpenseSubCategory(models.Model):
     meter_reading = fields.Float(string='Meter Reading')
     is_petty_cash = fields.Boolean(string='Petty Cash')
     management_approval = fields.Boolean(string='CEO Approval')
+    monthly_limit = fields.Boolean(string='Amount Limit Per Month')
+    monthly_amount = fields.Float(string='Per Month Amount')
    

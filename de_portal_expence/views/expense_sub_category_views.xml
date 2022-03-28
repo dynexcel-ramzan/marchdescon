@@ -23,6 +23,8 @@
                                    <field name="management_approval" />    
                                    <field name="amount" />
                                    <field name="meter_reading" />
+                                   <field name="monthly_limit" />
+                                   <field name="monthly_amount" attrs="{'invisible': [('monthly_limit', '=',False)]}" />
                             </group>
                             <group>
                                 <field name="ora_category_id" />

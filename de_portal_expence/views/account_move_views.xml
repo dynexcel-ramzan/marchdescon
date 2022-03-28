@@ -13,12 +13,21 @@
         </field>
     </record>
     
+    <record id="account_move_line_form_view_project" model="ir.ui.view">
+        <field name="name">account.move.form.view.project</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']//tree//field[@name='name']" position="after">
+                  <field name="project_id" />
+            </xpath>
+        </field>
+    </record>
+    
      <record id="action_hr_expense_account" model="ir.actions.act_window">
             <field name="name">Employee Expenses</field>
             <field name="res_model">hr.expense.sheet</field>
             <field name="view_mode">tree,kanban,form,pivot,graph</field>
-<!--             <field name="search_view_id" ref="hr_expense_sheet_view_search"/>
-            <field name="view_id" ref="view_hr_expense_sheet_tree"/> -->
             <field name="domain">[]</field>
             <field name="context">{
                 'search_default_approved': 1,

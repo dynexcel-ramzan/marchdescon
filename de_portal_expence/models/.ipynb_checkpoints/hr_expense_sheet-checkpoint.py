@@ -11,6 +11,9 @@ from odoo.tools import email_split, float_is_zero
 
 class HrExpenseSheet(models.Model):
     _inherit = 'hr.expense.sheet'
+
+    def action_submit_sheet(self):
+        self.write({'state': 'submit'})
     
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, index=True,
                           default=lambda self: _('New'))
@@ -131,6 +134,7 @@ class ExpenseSheetLine(models.Model):
     
     
     member_id = fields.Many2one('hr.employee.family', string='Dependent', domain="[('employee_id','=',employee_id)]")
+    project_id = fields.Many2one('project.project',  string='Project')
     meter_reading = fields.Float(string='Meter Reading')
     fleet_id = fields.Many2one('vehicle.meter.detail', string='Vehicle')
     attachment_id = fields.Many2many('ir.attachment', relation="files_rel_expense_line",
@@ -867,6 +871,7 @@ Or send your receipts at <a href="mailto:%(email)s?subject=Lunch%%20with%%20cust
 class hr_expense(models.Model):
     _inherit = 'hr.expense'
     
+    project_id = fields.Many2one('project.project',  string='Project')
     
     def action_draft(self):
         self.update({

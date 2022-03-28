@@ -9,9 +9,14 @@
             
             <xpath expr="//header" position="inside">
                 <button name="action_document_verify"  string="Document Received" type="object" class="oe_highlight" attrs="{'invisible': ['|',('state', 'not in', ['submit', 'approve']),('document_received', '=',True)]}" groups='account.group_account_invoice'/>
-                <button name="action_deposit"  string="Deposit" type="object" class="oe_highlight" attrs="{'invisible': ['|','|', ('state', '!=', 'done'),('is_deposit', '=',True),('is_deposit_adjusted', '=',True)]}" groups='account.group_account_manager'/>
+                <button name="action_deposit"  string="Deposit" type="object" class="oe_highlight" attrs="{'invisible': ['|','|', ('state', '!=', 'done'),('is_deposit', '=',True),('is_deposit_adjusted', '=',True)]}" groups='de_portal_expence.group_payment_register_voucher'/>
 
-            </xpath>    
+            </xpath>  
+            <xpath expr="//header//button[@name='action_register_payment']" position="replace">
+                <button name="action_register_payment" type="object" class="oe_highlight o_expense_sheet_pay" 
+                    attrs="{'invisible': [('state', '!=', 'post')]}" context="{'dont_redirect_to_payments': True}" string="Register Payment" groups="account.group_account_invoice"/>
+            </xpath>  
+            
             <xpath expr="//group[@name='employee_details']" position="after">
                 <group name='extra_details'>
                    <field name="ora_category_id" />
@@ -24,12 +29,16 @@
                    <field name="department_id"/> 
                 </group>    
             </xpath>
+            <xpath expr="//field[@name='expense_line_ids']//tree//field[@name='name']" position="after">
+                <field name="project_id" optional="show" />
+            </xpath>    
             <xpath expr="//notebook//page[@name='expenses']" position="before">
                 <page string='Expense Lines' invisible='1'>
                 <field name="expense_sheet_line_ids" nolabel="1" widget="many2many" >
                             <tree decoration-danger="is_refused" editable="bottom">
                                 <field name="date" optional="show"/>
                                 <field name="name"/>
+                                <field name="project_id" optional="show" />
                                 <field name="state" invisible="1"/>
                                 <field name="medical_paid" invisible="1"/>
                                 <field name="previous_reading" invisible="1"/>

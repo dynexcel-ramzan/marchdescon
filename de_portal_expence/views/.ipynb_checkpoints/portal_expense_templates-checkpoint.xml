@@ -17,7 +17,7 @@
 
     <template id="portal_my_home" name="Show expenses / fifty" customize_show="True" inherit_id="portal.portal_my_home" priority="25">
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-            <t t-call="portal.portal_docs_entry"  groups="de_portal_expence.group_expense">
+            <t t-call="portal.portal_docs_entry"  >
                 <t t-set="title">Expenses</t>
                 <t t-set="url" t-value="'/my/expenses'"/>
                 <t t-set="placeholder_count" t-value="'expense_count'"/>
@@ -74,7 +74,8 @@
                       <th>Date</th>  
                       <th>Total Amount</th>  
                       <th>Status</th>
-                      <th>Document Received</th>  
+                      <th>Document Received</th>
+                      <th></th>  
                     </tr>
                   </thead>
                    
@@ -144,6 +145,11 @@
                                   <i class="badge badge-pill badge-danger" >Cancel</i>
                               </t>
                           </td>
+                          <td>
+                             <t t-if='expense.state=="draft"'> 
+                               <a t-attf-href="/action/delete/expense/#{expense.id}?"><i class="fa fa-trash"></i></a>
+                             </t>      
+                          </td>
                       </tr>
                   </t> 
               </table>
@@ -180,7 +186,9 @@
             
                        <t t-if='expense.state=="draft"'>
                          <t t-if='expense.employee_id.user_id.id==uid or expense.employee_id.expense_incharge_id.user_id.id==uid'>
-                              <a t-attf-href="/action/submit/expense/#{expense.id}?" > <div class="btn btn-primary pull-left" style="height:30px; line-height:100%; margin-left:5px;color:white;">Submit</div> </a> 
+                              <a t-attf-href="/action/submit/expense/#{expense.id}?" > <div class="btn btn-primary pull-left" style="height:30px; line-height:100%; margin-left:5px;color:white;">Submit</div> </a>
+                             
+                             <a t-attf-href="/action/delete/expense/#{expense.id}?" > <div class="btn btn-primary pull-left" style="height:30px; line-height:100%; margin-left:5px;color:white;">Delete</div> </a>
                              
                           
                          </t>
@@ -251,17 +259,17 @@
                                     </t>     
                               </t> 
                             </t>     
-                            <t t-if='is_deposit==True'>  
+                            <t t-if='expense.is_deposit==True'>  
                               <span t-esc='expense.state'/>
                             </t>
                            <t t-if='expense.state=="done"'>
-                            <t t-if='is_deposit_adjusted==False'>    
-                             <t t-if='is_deposit==False'>  
+                            <t t-if='expense.is_deposit_adjusted==False'>    
+                             <t t-if='expense.is_deposit==False'>  
                                Posted
                              </t>
                             </t>    
                            </t>
-                            <t t-if='is_deposit_adjusted==True'>  
+                            <t t-if='expense.is_deposit_adjusted==True'>  
                               Adjusted
                             </t>  
                        </i>
@@ -354,18 +362,6 @@
                </div> 
             </t>
              
-              <div class="o_notebook" data-name="_default_">
-                          <div class="o_notebook_headers">
-                              <ul class="nav nav-tabs">
-                                  <li class="nav-item">
-                                    <a data-toggle="tab" disable_anchor="true" href="#notebook_page_33378" class="nav-link active" role="tab">Expense Lines</a>
-                                  </li>
-                                  <!--<li class="nav-item">
-                                      <a data-toggle="tab" disable_anchor="true" href="#notebook_page_3340" class="nav-link" role="tab">Other Info</a>
-                                  </li> -->
-                              </ul>
-                          </div>   
-                        </div>
                             
                         &#160;&#160;&#160;&#160;&#160;
             
@@ -562,7 +558,39 @@
                                     </div>
                                   </div>
                                  </t>    
+                          </div>  
+                          <t t-if='is_project_expense==False' >
+                              <input id='project' type="hidden" class="form-control s_website_form_input" name="project_id"  t-att-value="0"/>
+                          </t>    
+                          <t t-if='is_project_expense==True' >  
+                           <div class="s_website_form_rows row">
+                             <div class="form-group col-6 s_website_form_field" data-type="char" data-name="Field">
+                                <div class="row s_col_no_resize">
+                                    <label class="col-form-label col-sm-auto" style="width: 200px" for="attachment">
+                                        <span style='color:#495057;'>Project</span>
+                                    </label>
+                                   <div class="col-sm" id='data_list'>
+                                           <select id="project" class="form-control  o_website_form_input" name="project_id" readonly="1" >
+                                              <option t-att-value="blank">
+                                              </option>    
+                                               
+                                            <t t-if='error_flag=="1"'>
+                                                   <option t-att-value="forcasted['project_id']">
+                                                    <t t-esc="request.env['project.project'].sudo().search([('id','=',forcasted['project_id'])]).name"  />
+                                                   </option>
+                                            </t>   
+                                            <t t-foreach="projects" t-as="project">
+                                                <option t-att-value="project.id">
+                                                    <t t-esc="project.name"  />
+                                                </option>
+                                            </t>
+                                       </select> 
+                                    </div>
+                                </div>
+                              </div>                                 
                           </div>    
+                        </t>
+                           
                                               
                             
                         <t t-if='expense.ora_category_id.has_description=="optional"'>    
@@ -731,7 +759,17 @@
                     <tr style='background-color:#875A7B; color:white;'>
                       <th>Expense Type</th>
                       <th>Bill Reference</th>
-                      <th>Remarks</th>  
+                      <th>Remarks</th> 
+                       <t t-set='exp_project' t-value='0' />
+                        <t t-foreach="expense.expense_sheet_line_ids" t-as="expense_prj"> 
+                          <t t-if='expense_prj.project_id'>
+                             <t t-set='exp_project' t-value='1' /> 
+                          </t>                            
+                        </t>
+                       <t t-if='exp_project=="1"'> 
+                          <th>Project</th>  
+                       </t> 
+                        
                       <t t-if='expense.ora_category_id.has_dependent in ("optional","required")'>    
                         <th>Dependent</th>
                       </t>    
@@ -754,6 +792,9 @@
                               <td><t t-esc='sheet_line.sub_category_id.name'/></td>
                               <td><t t-esc='sheet_line.reference'/></td>
                               <td><t t-esc='sheet_line.name'/></td> 
+                               <t t-if='sheet_line.project_id'> 
+                                  <td><t t-esc='sheet_line.project_id.name'/></td>
+                               </t> 
                               <t t-if='expense.ora_category_id.has_dependent in ("optional","required")'>  
                                 <td>
                                   <t t-if='sheet_line.member_id'>  
@@ -959,6 +1000,15 @@
                       <th>Expense Date</th>  
                       <th>Expense Type</th>
                       <th>Bill Reference</th>
+                        <t t-set='exp_project' t-value='0' />
+                        <t t-foreach="expense.expense_line_ids" t-as="expense_prj"> 
+                          <t t-if='expense_prj.project_id'>
+                             <t t-set='exp_project' t-value='1' /> 
+                          </t>                            
+                        </t>
+                       <t t-if='exp_project==0'> 
+                          <th>Project</th>  
+                       </t> 
                       <t t-if='expense.ora_category_id.has_dependent in ("optional","required")'>    
                         <th>Dependent</th>
                       </t>    
@@ -983,6 +1033,9 @@
                               <td><t t-esc='expense_line.date' t-options='{"widget": "date"}'/></td>
                               <td><t t-esc='expense_line.sub_category_id.name'/></td>
                               <td><t t-esc='expense_line.reference'/></td>
+                               <t t-if='expense_line.project_id'> 
+                                  <td><t t-esc='expense_line.project_id.name'/></td>
+                               </t>    
                               <t t-if='expense.ora_category_id.has_dependent in ("optional","required")'>  
                                 <td>
                                   <t t-if='expense_line.member_id'>  
@@ -1313,18 +1366,6 @@
                   </script>            
                   <!-- Expense Date -->    
                                 
-                    <div class="s_website_form_rows row s_col_no_bgcolor">
-                        <div class="form-group col-6 s_website_form_field" data-type="char" data-name="Field">
-                               <div class="row s_col_no_resize s_col_no_bgcolor">
-                                   <label class="col-form-label col-sm-auto s_website_form_label" style="width: 200px" for="expense_date">
-                                       <span class="s_website_form_label_content">Expense Date</span>
-                                   </label>
-                                   <div class="col-sm">
-                                        <input type="date" class="form-control s_website_form_input date_from_edit" name="accounting_date"   required="1"  t-att-value='accounting_date' onchange='validatedateFormExpensec(event)'/>
-                                   </div>
-                               </div>
-                           </div>
-                    </div>
                            
                         <div class="s_website_form_rows row s_col_no_bgcolor">
                          <div class="form-group col-6 s_website_form_field" data-type="char" data-name="Field">
@@ -1513,8 +1554,39 @@
                                     </div>
                                   </div>
                                  </t>    
+                          </div>   
+                          
+                          <t t-if='is_project_expense==False' >
+                              <input id='project' type="hidden" class="form-control s_website_form_input" name="project_id"  t-att-value="0"/>
+                          </t>    
+                          <t t-if='is_project_expense==True' >  
+                             <div class="s_website_form_rows row">
+                             <div class="form-group col-6 s_website_form_field" data-type="char" data-name="Field">
+                                <div class="row s_col_no_resize">
+                                    <label class="col-form-label col-sm-auto" style="width: 200px" for="attachment">
+                                        <span style='color:#495057;'>Project</span>
+                                    </label>
+                                   <div class="col-sm" id='data_list'>
+                                           <select id="project" class="form-control  o_website_form_input" name="project_id" readonly="1" >                                               
+                                              
+                                            <t t-if='error_flag=="1"'>
+                                                   <option t-att-value="forcasted['project_id']">
+                                                    <t t-esc="request.env['project.project'].sudo().search([('id','=',forcasted['project_id'])]).name"  />
+                                                   </option>
+                                            </t>   
+                                              <option t-att-value="blank">
+                                              </option>   
+                                            <t t-foreach="projects" t-as="project">
+                                                <option t-att-value="project.id">
+                                                    <t t-esc="project.name"  />
+                                                </option>
+                                            </t>
+                                       </select> 
+                                    </div>
+                                </div>
+                              </div>     
                           </div>    
-                       
+                        </t> 
                           
                           
                           <t t-if='expense_categories.has_description=="optional"'>    
@@ -1648,10 +1720,7 @@
                         });
                         });
                       </script> 
-                            
-                    
-                       
-                           
+                             
                         <div class="s_website_form_rows row s_col_no_bgcolor">
                                  <div class="form-group col-12 s_website_form_submit" data-name="Submit Button">
                                         <div style="width: 200px;" class="s_website_form_label"></div>
@@ -1667,7 +1736,7 @@
                     <tr style='background-color:#875A7B; color:white;'>
                       <th>Expense Type</th>    
                       <th>Bill Reference No.</th>  
-                      <th>Amount</th>
+                      <th>Amount</th>   
                       <t t-if='expense_categories.is_attachment in ("optional","required")'>  
                         <th>Attachment</th>
                       </t>   
@@ -1695,12 +1764,7 @@
             <i class="fa fa-1x fa-clock-o mr8"/>
             <small class="o_default_snippet_text">
             <div class="mt32">
-               <!-- 
-                <form  id="portal_expense_attachment" data-toggle="validator" action="/expense/attachment/save" method="post"  enctype="multipart/form-data">
-                    <h4><strong>Attachment</strong></h4>
-                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    <input type="file" id="files" name="attachment" multiple="true" />
-                </form>  -->
+              
             </div>
             </small>
            </div>

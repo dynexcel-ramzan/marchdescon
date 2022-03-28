@@ -16,6 +16,7 @@ from odoo.tools import groupby as groupbyelem
 from odoo.osv.expression import OR
 import base64
 import ast
+from datetime import date, datetime, timedelta
 
 def action_check_expense_warning(warning):
     company_info = request.env['res.users'].sudo().search([('id', '=', http.request.env.context.get('uid'))])
@@ -25,7 +26,8 @@ def action_check_expense_warning(warning):
     }
 
 def expense_page_content(flag = 0, expense=0, categ=0, exception=0, subordinate=0, employee=0, warning=0, forcasted=0, acounting_date=0):
-    products = request.env['expense.sub.category'].sudo().search([])       
+    products = request.env['expense.sub.category'].sudo().search([])
+    projects = request.env['project.project'].sudo().search([])
     is_subordinate_expense = False
     has_subordinate = 0
     employees = request.env['hr.employee'].sudo().search([('user_id','=',http.request.env.context.get('uid'))])
@@ -97,11 +99,16 @@ def expense_page_content(flag = 0, expense=0, categ=0, exception=0, subordinate=
     if warning !=0:
         errora_message = warning
         error_flag = '1'
+    is_project_expense=False    
+    if employees.company_id.is_project_expense==True:
+        is_project_expense=True
     return {
         'managers': managers,
         'is_editable': is_editable,
         'forcasted': forcasted,
         'employees' : employees,
+        'is_project_expense': is_project_expense,
+        'projects': projects,
         'controllers': controllers,
         'expected_accounting_date': fields.date.today(),
         'start_accounting_date': '2022-01-16',
@@ -142,7 +149,8 @@ def paging(data, flag1 = 0, flag2 = 0):
         k = []
         for rec in data:
             for ids in rec:
-                config.list12.append(ids.id)        
+                config.list12.append(ids.id) 
+                
         
 class CreateApproval(http.Controller):
     
@@ -175,8 +183,8 @@ class CreateApproval(http.Controller):
         employee=request.env['hr.employee'].sudo().search([('id','=',int(kw.get('uniq_employee_id')) )], limit=1)
         exception = True if kw.get('ora_exception')=='yes' else False
         ora_category=request.env['ora.expense.category'].sudo().search([('id','=',int(kw.get('ora_category')))], limit=1)
-        product = request.env['expense.sub.category'].search([('id','=',int(kw.get('product_id')))], limit=1)
-        acounting_date=kw.get('acounting_date')
+        product = request.env['expense.sub.category'].search([('id','=',int(kw.get('product_id')))], limit=1)            
+        acounting_date=fields.date.today()
         cost_center_count = 0
         forcasted_data = {
             'expense_type': product.id,
@@ -184,6 +192,7 @@ class CreateApproval(http.Controller):
             'unit_amount': kw.get('unit_amount'),
             'product_id': int(kw.get('controll_id')),
             'attachment': kw.get('attachment'),
+            'project_id': 0,
             'member_id': '0',
             'name': '',
             'fleet_id': 0,
@@ -192,7 +201,13 @@ class CreateApproval(http.Controller):
         if kw.get('description'): 
             forcasted_data.update({
                     'name': kw.get('description'),
-                }) 
+                })
+        if kw.get('project_id'): 
+            project = request.env['project.project'].sudo().search([('id','=', int(kw.get('project_id')))], limit=1)   
+            if project:
+                forcasted_data.update({
+                    'project_id': project.id,
+                })   
         if kw.get('member_id'): 
             family_member = request.env['hr.employee.family'].search([('id','=', int(kw.get('member_id')))], limit=1)   
             if family_member:
@@ -208,15 +223,37 @@ class CreateApproval(http.Controller):
         if kw.get('meter_reading'):
             forcasted_data.update({
                 'meter_reading': kw.get('meter_reading'),
-            }) 
+            })
+        if product.monthly_limit==True:
+            monthly_amount_limit_sum = 0
+            monthly_amount_limit_claim =0
+            current_month_end_date = fields.date.today()
+            current_month_start_date = fields.date.today() - timedelta(30)
+            monthly_expenses = request.env['hr.expense'].search(
+                [('sub_category_id', '=', product.id), ('employee_id', '=', employee.id)
+                    , ('state', '!=', 'refused'),
+                 ('payment_mode', '=', 'own_account'),('create_date', '>=', current_month_start_date), ('create_date', '<=', current_month_end_date) ])
+            for month_amt in monthly_expenses:
+                monthly_amount_limit_sum += month_amt.total_amount
+                monthly_amount_limit_claim += month_amt.total_amount
+            monthly_amount_limit_sum += float(kw.get('unit_amount'))    
+            if monthly_amount_limit_sum > product.monthly_amount:
+                remain_claim_amount= (product.monthly_amount - monthly_amount_limit_claim)
+                if remain_claim_amount < 0:
+                    remain_claim_amount= 0
+                warning_message='Limit ('+str(product.name)+'): ' +str('{0:,}'.format(int(round(product.monthly_amount))))+' Per Month.'+ "\n" +'Current Amount: '+str('{0:,}'.format(int(round(float(kw.get('unit_amount'))))))+ "\n" +'Claimed Amount: '+str('{0:,}'.format(int(round(monthly_amount_limit_claim))))+ "\n" +'Remaining Amount: '+str('{0:,}'.format(int(round(remain_claim_amount))))
+                
+                return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))     
+        
         if not kw.get('controll_id'):
             warning_message='You are not allow to Submit Expense Claim! Your Control-Account is not set. Please contact with HR Department.'
-            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))    
-        controller = request.env['product.product'].search([('ora_category_id','=', ora_category.id),('controlled_id','=',int(kw.get('controll_id')))], limit=1)
+            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))  
+        
+        controller = request.env['product.product'].search([('sub_category_id','=',product.id),('ora_category_id','=', ora_category.id),('controlled_id','=',int(kw.get('controll_id')))], limit=1)
         
         if not kw.get('default_cost_center'):
             warning_message='You are not allow to Submit Expense Claim! Your Default Cost Center is not set. Please contact with HR Department.'
-            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))        
+            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))        
         default_cost_center = int(kw.get('default_cost_center'))
         
         contract = request.env['hr.contract'].sudo().search([('employee_id','=', employee.id),('state','=','open')], limit=1)
@@ -246,7 +283,7 @@ class CreateApproval(http.Controller):
                             inner_cost_center_count += 1    
                     if total_percentage_amount > 100 or total_percentage_amount < 100:
                         warning_message='Your Cost Center Distribution must equal to 100!'    
-                        return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))
+                        return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))
         if not analytic_cost_list:
             analytic_cost_list.append({
                         'analytic_account': default_cost_center,
@@ -269,9 +306,9 @@ class CreateApproval(http.Controller):
                 ora_unit = rec.ora_unit
                 period = int(rec.period)   
         expense_period_date = fields.date.today() - relativedelta(years=period)
-        if flag == False and exception!=True:
+        if flag == False and exception!=True and product.ora_category_id.is_amount_limit==True:
             warning_message="You are not allowed to make Claim against the selected expense type"
-            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))
+            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))
         else:
             employee_expenses = request.env['hr.expense'].search(
                 [('sub_category_id', '=', product.id), ('employee_id', '=', employee.id)
@@ -297,7 +334,7 @@ class CreateApproval(http.Controller):
             if sum_current > limit and product.ora_unit!='km' and exception!=True and product.ora_category_id.is_amount_limit==True:
                 limit_amount = limit-sum
                 warning_message="Limit ("+str(product.name)+'): '+ str('{0:,}'.format(int(round(limit)))) + "\n"+ " Already Claimed: " + str('{0:,}'.format(int(round(sum)))) + "\n" + " Remaining Amount: "+str('{0:,}'.format(int(round(limit_amount if limit_amount > 0 else 0))))+ "\n" +' Current Amount: '+ str('{0:,}'.format(int(round(float(kw.get('unit_amount'))))))+ "\n" +" You are not allowed to enter amount greater than remaining amount. "+ "\n" +" You may use Exception Option. "
-                return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))
+                return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))
             else:
                 pass   
         if ora_category.is_attachment=='required':
@@ -306,13 +343,13 @@ class CreateApproval(http.Controller):
                  return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data))
         if not kw.get('fleet_id') and product.ora_unit=='km':
             warning_message='You are not allow to Submit Vehicle Maintenance Expense Claim!'
-            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))
+            return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))
         if kw.get('fleet_id'): 
             fleet = request.env['vehicle.meter.detail'].search([('id','=',int(kw.get('fleet_id')))], limit=1)    
             if fleet:
                 if fleet.id!=employee.vehicle_id.id:
                     warning_message='You are not allow to select Vehicle rather than '+str(employee.vehicle_id.name)
-                    return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))  
+                    return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))  
             if kw.get('meter_reading'):
                 opening_vehicle_balance = 0
                 for reading_line  in employee.vehicle_meter_line_ids:
@@ -326,10 +363,10 @@ class CreateApproval(http.Controller):
                                 pass
                             else:
                                 warning_message='Last Reading: ' +str(round(opening_vehicle_balance))+ "\n"+' Due Reading: '+str(round(opening_vehicle_balance+product.meter_reading))+ "\n"+' Current Reading: '+str(round(float(kw.get('meter_reading'))))+ "\n"+' Please Enter Reading Greater than '+str(round(opening_vehicle_balance+product.meter_reading))
-                                return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))
+                                return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))
                     else:
                         warning_message='Please Enter Reading greater than your last Reading! '+str(opening_vehicle_balance)
-                        return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=kw.get('acounting_date')))
+                        return request.render("de_portal_expence.create_expense",expense_page_content(categ=ora_category.id, exception=exception, employee=employee.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))
         
         exist_sequence=request.env['ir.sequence'].sudo().search([('code','=','expense.sheet.sequence'),('company_id','=', employee.company_id.id)], limit=1)
         if not exist_sequence:
@@ -367,6 +404,12 @@ class CreateApproval(http.Controller):
         if kw.get('description'): 
            record_line.update({
                     'name': kw.get('description'),
+                })
+        if kw.get('project_id'): 
+            project = request.env['project.project'].sudo().search([('id','=', int(kw.get('project_id')))], limit=1)   
+            if project:
+                record_line.update({
+                    'project_id': project.id,
                 }) 
         if kw.get('member_id'): 
             family_member = request.env['hr.employee.family'].search([('id','=', int(kw.get('member_id')))], limit=1)            
@@ -375,11 +418,12 @@ class CreateApproval(http.Controller):
                     'member_id': family_member.id,
                 })
         if kw.get('fleet_id') : 
-            fleet = request.env['vehicle.meter.detail'].search([('id','=',int(kw.get('fleet_id')))], limit=1)            
+            fleet = request.env['vehicle.meter.detail'].search([('id','=',int(kw.get('fleet_id')))], limit=1)         
             if fleet:
                 record_line.update({
                     'fleet_id': fleet.id,
                 }) 
+                
         if kw.get('meter_reading'):
             record_line.update({
                 'meter_reading': kw.get('meter_reading'),
@@ -424,6 +468,12 @@ class CreateApproval(http.Controller):
                split_line.update({
                         'name': kw.get('description'),
                     }) 
+            if kw.get('project_id'): 
+                project = request.env['project.project'].sudo().search([('id','=', int(kw.get('project_id')))], limit=1)   
+                if project:
+                    split_line.update({
+                        'project_id': project.id,
+                    })
             if kw.get('member_id'): 
                 family_member = request.env['hr.employee.family'].search([('id','=', int(kw.get('member_id')))], limit=1)            
                 if family_member:
@@ -469,7 +519,7 @@ class CreateApproval(http.Controller):
         attachment_docs=kw.get('attachment')
         product = request.env['expense.sub.category'].search([('id','=',int(kw.get('product_id')))], limit=1)
         default_cost_center = int(kw.get('default_cost_center'))
-        controller = request.env['product.product'].search([('ora_category_id','=', ora_category.id),('controlled_id','=',int(kw.get('controll_id')))], limit=1)
+        controller = request.env['product.product'].search([('sub_category_id','=',product.id),('ora_category_id','=', ora_category.id),('controlled_id','=',int(kw.get('controll_id')))], limit=1)
         cost_center_count = 0
         contract = request.env['hr.contract'].sudo().search([('employee_id','=', expense_sheet.employee_id.id),('state','=','open')], limit=1)
         forcasted_data = {
@@ -478,6 +528,7 @@ class CreateApproval(http.Controller):
             'unit_amount': kw.get('unit_amount'),
             'product_id': int(kw.get('controll_id')),
             'attachment': kw.get('attachment'),
+            'project_id': 0,
             'member_id': '0',
             'name': '',
             'fleet_id': 0,
@@ -493,6 +544,12 @@ class CreateApproval(http.Controller):
                 forcasted_data.update({
                     'member_id': family_member.id,
                 })
+        if kw.get('project_id'): 
+            project = request.env['project.project'].search([('id','=', int(kw.get('project_id')))], limit=1)   
+            if project:
+                forcasted_data.update({
+                    'project_id': project.id,
+                })        
         if kw.get('fleet_id') : 
             fleet = request.env['vehicle.meter.detail'].search([('id','=',int(kw.get('fleet_id')))], limit=1)           
             if fleet:
@@ -503,6 +560,25 @@ class CreateApproval(http.Controller):
             forcasted_data.update({
                 'meter_reading': kw.get('meter_reading'),
             })
+        if product.monthly_limit==True:
+            monthly_amount_limit_sum = 0
+            monthly_amount_limit_claim = 0
+            current_month_end_date = fields.date.today()
+            current_month_start_date = fields.date.today() - timedelta(30)
+            monthly_expenses = request.env['hr.expense'].search(
+                [('sub_category_id', '=', product.id), ('employee_id', '=', expense_sheet.employee_id.id)
+                    , ('state', '!=', 'refused'),
+                 ('payment_mode', '=', 'own_account'),('create_date', '>=', current_month_start_date), ('create_date', '<=', current_month_end_date) ])
+            for month_amt in monthly_expenses:
+                monthly_amount_limit_sum += month_amt.total_amount
+                monthly_amount_limit_claim +=  month_amt.total_amount
+            monthly_amount_limit_sum += float(kw.get('unit_amount'))    
+            if monthly_amount_limit_sum > product.monthly_amount:
+                remain_claim_amount= (product.monthly_amount-monthly_amount_limit_claim)
+                if remain_claim_amount < 0:
+                    remain_claim_amount= 0
+                warning_message='Limit ('+str(product.name)+') '+str('{0:,}'.format(int(round(product.monthly_amount)))) +' Per Month.'+ "\n" +'Current Amount: '+str('{0:,}'.format(int(round(float(kw.get('unit_amount'))))))+ "\n" +'Claimed Amount: '+str('{0:,}'.format(int(round(monthly_amount_limit_claim))))+ "\n" +'Remaining Amount: '+str('{0:,}'.format(int(round(remain_claim_amount))))
+                return request.render("de_portal_expence.portal_my_expense",expense_page_content(expense=expense_sheet.id, categ=ora_category.id, exception=expense_sheet.exception, employee=expense_sheet.employee_id.id, warning=warning_message, forcasted=forcasted_data, acounting_date=fields.date.today()))     
             
         for cost_info in contract.cost_center_information_line:
             cost_center_count += 1    
@@ -555,7 +631,7 @@ class CreateApproval(http.Controller):
                 ora_unit = rec.ora_unit
                 period = int(rec.period)    
         expense_period_date = fields.date.today() - relativedelta(years=period)
-        if flag == False and expense_sheet.exception!=True:
+        if flag == False and expense_sheet.exception!=True and product.ora_category_id.is_amount_limit==True:
             warning_message="You are not allowed to make Claim against the selected expense type"
             return request.render("de_portal_expence.portal_my_expense", expense_page_content(expense=expense_sheet.id, categ=ora_category.id, exception=exception, warning=warning_message, forcasted=forcasted_data))
         else:
@@ -629,9 +705,15 @@ class CreateApproval(http.Controller):
         }
         record_line = request.env['hr.expense.sheet.line'].sudo().create(line_vals)
         if kw.get('description'): 
-           record_line.update({
+            record_line.update({
                     'name': kw.get('description'),
                 })
+        if kw.get('project_id'): 
+            project = request.env['project.project'].sudo().search([('id','=', int(kw.get('project_id')))], limit=1)   
+            if project:
+                record_line.update({
+                    'project_id': project.id,
+                }) 
         if kw.get('member_id'): 
             family_member = request.env['hr.employee.family'].search([('id','=', int(kw.get('member_id')))], limit=1)            
             if family_member:
@@ -684,8 +766,14 @@ class CreateApproval(http.Controller):
             split_line = request.env['hr.expense'].sudo().create(split_line_vals)
             exist_record_line =  split_line                       
             if kw.get('description'): 
-               split_line.update({
+                split_line.update({
                         'name': kw.get('description'),
+                    })
+            if kw.get('project_id'): 
+                project = request.env['project.project'].sudo().search([('id','=', int(kw.get('project_id')))], limit=1)   
+                if project:
+                    split_line.update({
+                        'project_id': project.id,
                     })
             if kw.get('member_id'): 
                 family_member = request.env['hr.employee.family'].search([('id','=', int(kw.get('member_id')))], limit=1)            
@@ -745,6 +833,17 @@ class CustomerPortal(CustomerPortal):
             'is_approval_done': True
         })
         return request.render("de_portal_expence.portal_my_expense", values)
+    
+    
+    @http.route(['/action/delete/expense/<int:expense_id>'], type='http', auth="public", website=True)
+    def action_delete_sheet_expense(self,expense_id , access_token=None, **kw):
+        expense = request.env['hr.expense.sheet'].sudo().search([('id','=', expense_id)], limit=1)
+        for exp_line in expense.expense_line_ids:
+            exp_line.unlink()
+        for exp_sheet_line in expense.expense_sheet_line_ids:
+            exp_sheet_line.unlink()    
+        expense.unlink()     
+        return request.redirect('/my/expenses')
     
     @http.route(['/expense/sheet/line/delete/<int:line_id>'], type='http', auth="public", website=True)
     def action_delete_sheet_expense_line(self,line_id , access_token=None, **kw):

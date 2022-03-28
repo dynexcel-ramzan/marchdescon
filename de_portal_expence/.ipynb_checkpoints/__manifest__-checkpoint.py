@@ -24,6 +24,7 @@
     'depends': [
         'portal',
         'rating',
+        'account',
         'base',
         'resource',
         'web',

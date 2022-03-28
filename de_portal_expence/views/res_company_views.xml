@@ -13,6 +13,7 @@
                   <field name="is_fbp_approval"/>
                   <field name="chanceller_id"/>
                   <field name="finance_partner_id"/>
+                  <field name="is_project_expense"/>
             </xpath>
         </field>
     </record>

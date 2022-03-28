@@ -8,5 +8,7 @@ class ResCompany(models.Model):
     chanceller_id = fields.Many2one('hr.employee', string='Vice-Chairman')
     finance_partner_id = fields.Many2one('hr.employee', string='FBP')
     is_fbp_approval = fields.Boolean(string='FBP Approval')
+    is_project_expense = fields.Boolean(string='Project Expense')
+
     
 
