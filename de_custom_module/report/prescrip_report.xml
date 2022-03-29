@@ -1,0 +1,14 @@
+<odoo>
+    <data>
+         <report id="medicine_prescrip_report"
+            model="medicine.prescrip"
+            string="Prescrip Report"
+            report_type="qweb-pdf"
+            name="de_custom_module.prescrip_template"
+            file="de_custom_module.prescrip_template"
+                 
+       />
+        
+        
+    </data>
+</odoo>

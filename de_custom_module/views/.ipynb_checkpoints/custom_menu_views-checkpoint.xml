@@ -14,6 +14,7 @@
                                        placeholder="Test ...."/>
                             </h1>
                         </div>
+                        
                         <group>
                             <group>
                                 <field name="employee_id"/>
@@ -26,7 +27,22 @@
                                 
                             </group>
                            
-                        </group>                                             
+                        </group>      
+                        
+                         <notebook>
+                             <page string="Lines" name="prescrip_lines">
+                                 <field name='prescrip_line'>
+                                     <tree editable="bottom">
+                                         <field name="product_id" widget='many2many_tags' />
+                                         <field name="name"/>
+                                         <field name="amount" sum="Total"/>
+                                         <field name="prescrip_id" invisible="1"/>
+                                         
+                                     </tree>
+                                 </field>
+                             </page>    
+                         </notebook>      
+                        
                     </sheet>                 
                 </form>
             </field>

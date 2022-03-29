@@ -22,11 +22,15 @@
     'version': '14.0.0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr'],
+    'depends': ['base','hr', 'product'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
+        
+        'report/prescrip_report.xml',
+        'report/prescrip_report_templates.xml',
+        
         'views/custom_menu_views.xml',
         'views/templates.xml',
     ],
