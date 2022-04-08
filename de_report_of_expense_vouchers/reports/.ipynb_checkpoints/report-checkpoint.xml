@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <report 
+        id="report_expense"
+        model="hr.expense.sheet"
+        string="Employee Expenses"
+        report_type="qweb-pdf"
+        name="de_report_of_expense_vouchers.report_expense"
+        file="de_report_of_expense_vouchers.report_expense"
+    />
+</odoo>
